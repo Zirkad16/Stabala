@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивна Пропозиція Співпраці | Стабала Груп</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutral & Professional Teal -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard to explore the recruiting proposal. It starts with a brief intro, followed by the main interactive element: a vacancy explorer with a dynamic cost calculator and salary slider. This allows the client to immediately engage with the core of the proposal (cost & services). This is more effective than a static table as it encourages exploration. Subsequent sections visually detail the work process and key benefits, followed by a clear call to action. This structure guides the user from understanding the offer to making a decision. -->
+    <!-- Visualization & Content Choices: 1. Vacancy Cost: A dynamic horizontal bar chart (Chart.js) shows the cost breakdown (fixed vs. percentage). Interaction is driven by vacancy selection buttons and a salary slider. This makes the pricing model tangible and transparent. 2. Process Flow: A numbered grid of cards (HTML/Tailwind) visualizes the 6-step process, making it easy to digest. 3. Key Benefits: A card-based grid (HTML/Tailwind) highlights the main advantages, making them scannable and impactful. This structure transforms static text into an engaging, user-driven experience. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+            max-height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 350px;
+            }
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #0d9488;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d1d5db;
+            outline: none;
+            border-radius: 9999px;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        .slider:hover {
+            opacity: 1;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #0d9488;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #0d9488;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-teal-700">Стабала Груп</h1>
+            <p class="text-gray-600 mt-1">Ваш Надійний Партнер у Рекрутингу</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-12">
+
+        <section id="proposal" class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Інтерактивна Пропозиція Співпраці</h2>
+            <p class="max-w-3xl mx-auto text-gray-600">
+                Ми цінуємо нашу співпрацю та підготували для вас цю інтерактивну пропозицію, щоб детально та прозоро продемонструвати умови нашого партнерства. Тут ви можете дослідити вартість послуг для кожної вакансії, зрозуміти наш процес роботи та ознайомитись з ключовими перевагами, які ми пропонуємо.
+            </p>
+        </section>
+
+        <section id="calculator" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-12 md:mb-16">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl md:text-3xl font-bold mb-2">Калькулятор Вартості</h3>
+                <p class="max-w-2xl mx-auto text-gray-600">Оберіть вакансію, щоб побачити деталі. Використовуйте повзунок, щоб побачити, як змінюється вартість наших послуг залежно від запропонованої кандидату зарплати.</p>
+            </div>
+            
+            <div id="vacancy-nav" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8"></div>
+            
+            <div class="grid md:grid-cols-5 gap-8 items-center">
+                <div class="md:col-span-2">
+                    <h4 id="vacancy-title" class="text-xl md:text-2xl font-bold text-teal-700 mb-3"></h4>
+                    <p id="vacancy-description" class="text-gray-600 mb-6 text-sm"></p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="salary-slider" class="block font-medium mb-1">Очікувана ЗП (на руки): <span id="salary-value" class="font-bold text-teal-700"></span> грн</label>
+                            <input type="range" id="salary-slider" class="slider">
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="font-medium">Орієнтовна вартість послуг:</p>
+                            <p id="total-cost" class="text-3xl font-bold text-teal-700"></p>
+                        </div>
+                        <div>
+                             <p class="font-medium">Орієнтовний термін закриття:</p>
+                             <p id="vacancy-term" class="text-lg font-semibold"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <div class="chart-container">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="process" class="mb-12 md:mb-16">
+             <div class="text-center mb-8 md:mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold mb-2">Наш Процес Співпраці</h3>
+                <p class="max-w-2xl mx-auto text-gray-600">Ми дотримуємося чіткого та прозорого процесу, щоб забезпечити найкращий результат. Кожен етап ретельно спланований для максимальної ефективності та вашого комфорту.</p>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">1</span>
+                        <h4 class="font-bold text-lg">Детальний Бриф</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Глибоко занурюємось у ваші потреби, щоб зрозуміти культуру компанії та вимоги до кандидата.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">2</span>
+                        <h4 class="font-bold text-lg">Договір та Старт</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Підписуємо угоду з чітко визначеними умовами та негайно розпочинаємо пошук.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                         <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">3</span>
+                        <h4 class="font-bold text-lg">Активний Пошук</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Задіюємо власну базу, професійні мережі, прямий пошук та рекомендації.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">4</span>
+                        <h4 class="font-bold text-lg">Ретельний Скринінг</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Проводимо багатоетапний відбір, включаючи співбесіди та перевірку рекомендацій.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">5</span>
+                        <h4 class="font-bold text-lg">Презентація Кандидатів</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Надаємо вам короткий список найкращих фахівців, що повністю відповідають вимогам.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-600">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg mr-4">6</span>
+                        <h4 class="font-bold text-lg">Супровід та Гарантія</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">Підтримуємо на етапі офферу та надаємо гарантію безкоштовної заміни кандидата.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="why-us">
+            <div class="text-center mb-8 md:mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold mb-2">Чому обирають нас?</h3>
+                <p class="max-w-2xl mx-auto text-gray-600">Співпраця з нами — це не просто закриття вакансій. Це стратегічне партнерство, що надає вашому бізнесу відчутні переваги та допомагає будувати сильну команду.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-teal-50 p-6 rounded-lg text-center">
+                    <div class="text-4xl text-teal-600 mb-3">⏱️</div>
+                    <h4 class="font-bold mb-2">Економія Часу</h4>
+                    <p class="text-sm text-gray-700">Беремо на себе весь процес, звільняючи ваш час для стратегічних завдань.</p>
+                </div>
+                <div class="bg-teal-50 p-6 rounded-lg text-center">
+                    <div class="text-4xl text-teal-600 mb-3">🌐</div>
+                    <h4 class="font-bold mb-2">Доступ до Талантів</h4>
+                    <p class="text-sm text-gray-700">Використовуємо широку мережу контактів для пошуку найкращих кандидатів.</p>
+                </div>
+                <div class="bg-teal-50 p-6 rounded-lg text-center">
+                    <div class="text-4xl text-teal-600 mb-3">🎯</div>
+                    <h4 class="font-bold mb-2">Глибока Експертиза</h4>
+                    <p class="text-sm text-gray-700">Розуміємо специфіку ринку та знаходимо фахівців, що ідеально підходять.</p>
+                </div>
+                <div class="bg-teal-50 p-6 rounded-lg text-center">
+                    <div class="text-4xl text-teal-600 mb-3">🛡️</div>
+                    <h4 class="font-bold mb-2">Гарантія Якості</h4>
+                    <p class="text-sm text-gray-700">Надаємо безкоштовну заміну, якщо кандидат не проходить випробувальний термін.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12 md:mt-16">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <h3 class="text-xl font-bold mb-4">Готові до співпраці?</h3>
+            <p class="mb-6 max-w-lg mx-auto">Зв'яжіться з нами для обговорення деталей. Ми впевнені, що знайдемо ідеальних кандидатів для вашої команди.</p>
+            <div class="mb-4">
+                <p class="font-semibold">Щогольова Зоряна Степанівна</p>
+                <p class="text-gray-400">Керівник рекрутингового агентства Стабала Груп</p>
+            </div>
+             <div class="flex justify-center items-center space-x-6">
+                <a href="tel:+380660324152" class="hover:text-teal-400 transition-colors">+38 066 032 41 52</a>
+                <a href="mailto:info@stabalagroup.com" class="hover:text-teal-400 transition-colors">info@stabalagroup.com</a>
+            </div>
+        </div>
+        <div class="bg-gray-900 py-3 text-center text-sm text-gray-500">
+            &copy; 2025 Стабала Груп. Всі права захищено.
+        </div>
+    </footer>
+
+    <script>
+        const vacancyData = [
+            {
+                id: 'brand_assistant',
+                title: 'Brand Assistant & Coordination Manager',
+                description: 'Універсальний помічник, що поєднує адміністративні функції, особисту підтримку та роботу з колекційними зразками.',
+                salaryMin: 25000,
+                salaryMax: 30000,
+                fixedFee: 10000,
+                percentage: 0.50,
+                term: '2-4 тижні'
+            },
+            {
+                id: 'logistics',
+                title: 'Логіст з розумінням ЗЕД',
+                description: 'Фахівець, що забезпечує ефективну логістику та оптимізацію зовнішньоекономічної діяльності компанії.',
+                salaryMin: 30000,
+                salaryMax: 40000,
+                fixedFee: 12000,
+                percentage: 0.60,
+                term: '3-5 тижнів'
+            },
+            {
+                id: 'fin_manager',
+                title: 'Бухгалтер / Фінансовий менеджер',
+                description: 'Ключовий фахівець для формування управлінської звітності та фінансового аналізу для прийняття рішень.',
+                salaryMin: 30000,
+                salaryMax: 60000,
+                fixedFee: 15000,
+                percentage: 0.70,
+                term: '4-6 тижнів'
+            },
+            {
+                id: 'seamstress',
+                title: 'Кравчині',
+                description: 'Кваліфіковані майстрині для виробничого процесу з високою якістю роботи та вмінням працювати з різним обладнанням.',
+                salaryMin: 27000,
+                salaryMax: 35000,
+                fixedFee: 8000,
+                percentage: 0.40,
+                term: '2-3 тижні'
+            },
+            {
+                id: 'chief_accountant',
+                title: 'Головний бухгалтер',
+                description: 'Відповідальний керівник фінансового відділу, що забезпечує дотримання законодавства та ефективне управління фінансами.',
+                salaryMin: 60000,
+                salaryMax: 90000,
+                fixedFee: 25000,
+                percentage: 0.80,
+                term: '4-8 тижнів'
+            }
+        ];
+
+        let currentVacancy = vacancyData[0];
+        let costChart;
+
+        const vacancyNav = document.getElementById('vacancy-nav');
+        const vacancyTitle = document.getElementById('vacancy-title');
+        const vacancyDescription = document.getElementById('vacancy-description');
+        const vacancyTerm = document.getElementById('vacancy-term');
+        const salarySlider = document.getElementById('salary-slider');
+        const salaryValue = document.getElementById('salary-value');
+        const totalCostEl = document.getElementById('total-cost');
+        const chartCanvas = document.getElementById('costChart').getContext('2d');
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('uk-UA').format(Math.round(num));
+        }
+
+        function updateCost() {
+            const salary = parseInt(salarySlider.value);
+            const percentageFee = salary * currentVacancy.percentage;
+            const totalCost = currentVacancy.fixedFee + percentageFee;
+
+            salaryValue.textContent = formatNumber(salary);
+            totalCostEl.textContent = `${formatNumber(totalCost)} грн`;
+
+            updateChart(currentVacancy.fixedFee, percentageFee);
+        }
+
+        function selectVacancy(vacancyId) {
+            currentVacancy = vacancyData.find(v => v.id === vacancyId);
+            
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.id === vacancyId);
+            });
+            
+            vacancyTitle.textContent = currentVacancy.title;
+            vacancyDescription.textContent = currentVacancy.description;
+            vacancyTerm.textContent = currentVacancy.term;
+
+            salarySlider.min = currentVacancy.salaryMin;
+            salarySlider.max = currentVacancy.salaryMax;
+            salarySlider.value = Math.round((currentVacancy.salaryMin + currentVacancy.salaryMax) / 2);
+            salarySlider.step = 1000;
+            
+            updateCost();
+        }
+        
+        function createChart() {
+            costChart = new Chart(chartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Фіксована частина', 'Відсоткова частина'],
+                    datasets: [{
+                        label: 'Структура вартості',
+                        data: [0, 0],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(13, 148, 136, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(13, 148, 136, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatNumber(value) + ' грн';
+                                }
+                            }
+                        },
+                        y: {
+                           grid: {
+                                display: false
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += formatNumber(context.parsed.x) + ' грн';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateChart(fixed, percentage) {
+             if (!costChart) {
+                createChart();
+            }
+            costChart.data.datasets[0].data = [fixed, percentage];
+            costChart.update();
+        }
+
+        function init() {
+            vacancyData.forEach(v => {
+                const button = document.createElement('button');
+                button.textContent = v.title;
+                button.dataset.id = v.id;
+                button.className = 'nav-button px-3 py-2 md:px-4 md:py-2 text-sm md:text-base bg-white border border-gray-300 rounded-full hover:bg-teal-100 hover:border-teal-300';
+                button.addEventListener('click', () => selectVacancy(v.id));
+                vacancyNav.appendChild(button);
+            });
+
+            salarySlider.addEventListener('input', updateCost);
+            
+            createChart();
+            selectVacancy(vacancyData[0].id);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
